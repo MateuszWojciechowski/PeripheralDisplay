@@ -5,10 +5,10 @@
 #include <Adafruit_NeoPixel.h>
 #define PIN 13
 #define NUM_PIXELS 3
+#define ITERATIONS 1020
 
 Timer t;
 bool pulsing[3] = {false, false, false};  //czy dioda jest w stanie pulsowania
-int event[3]; //identyfikator zdarzenia potrzebny do biblioteki Timer w momencie zatrzymania pulsowania
 bool lastPulseState[3] = {false, false, false}; //czy ostatnio dioda była włączono czy wyłączona
 String diodeColor[3] = {"black","black","black"}; //kolor na jaki ma świecić dioda podczas pulsowania
 
@@ -36,7 +36,7 @@ Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUM_PIXELS, PIN, NEO_GRB + NEO_KHZ8
 void setup() {
   // put your setup code here, to run once:
   pixels.begin();
-  pixels.setBrightness(128);
+  pixels.setBrightness(100);
   pixels.show();
   t.every(1000, pulse);
   Serial.begin(9600);
@@ -44,7 +44,6 @@ void setup() {
 
 void loop() {
   t.update();
-  // put your main code here, to run repeatedly:
   if (Serial.available())
   {
     int pixel = Serial.readStringUntil(':').toInt();
@@ -73,40 +72,64 @@ void loop() {
   }
 }
 
+//funkcja obsługująca pulsowanie diod
 void pulse()
 {
-  for (int i=0; i < 3; i++)
+  //iteruję po wszystkich diodach
+  for (int i=0; i < NUM_PIXELS; i++)
   {
+    //jeśli pulsowanie wyłączone to sprawdź czy dioda przypadkiem nie została wyłączona
     if (pulsing[i] == false)
     {
+      if (lastPulseState[i] == false)
+      {
+        String colorSymbol = diodeColor[i];
+        int *color;
+        color = getColor(colorSymbol);
+        fade(i, color, 500);
+        lastPulseState[i] = true;
+      }
       continue;
     }
+
+    //pobranie koloru diody
+    String colorSymbol = diodeColor[i];
+    int *color;
+    color = getColor(colorSymbol);
+
+    //jeśli jest wyłączona
     if (lastPulseState[i] == false)
     {
-      String colorSymbol = diodeColor[i];
-      int *color;
-      color = getColor(colorSymbol);
       fade(i, color, 500);
       lastPulseState[i] = true;
     }
+    //jeśli jest włączona
     else
     {
-      fade(i, black, 1000);
+      int darkColor[3];
+      //przyciemnij aktualny kolor
+      for(int i=0; i<3; i++)
+      {
+        darkColor[i] = color[i] / 4;
+      }
+      fade(i, darkColor, 1000);
       lastPulseState[i] = false;
     }
   }
 }
 
+//funkcja obliczająca zmianę wartości koloru w pojedynczej iteracji
 int calculateStep(int prevValue, int newValue)
 {
   int step = newValue - prevValue;
   if (step)
   {
-    step = 1020 / step;
+    step = ITERATIONS / step;
   }
   return step;
 }
 
+//funkcja obliczająca kolejną wartość danego koloru
 int calculateValue(int step, int value, int i)
 {
   if ((step) && i%step == 0)
@@ -132,6 +155,7 @@ int calculateValue(int step, int value, int i)
   return value;
 }
 
+//funkcja zmieniająca kolor podanej diody
 void fade(int pixel, int color[3], int time)
 {
   int G = color[0];
@@ -142,7 +166,7 @@ void fade(int pixel, int color[3], int time)
   int stepR = calculateStep(prevRedValue[pixel], R);
   int stepB = calculateStep(prevBlueValue[pixel], B);
 
-  for (int i = 0; i <= 1020; i++)
+  for (int i = 0; i <= ITERATIONS; i++)
   {
     redValue[pixel] = calculateValue(stepR, redValue[pixel], i);
     greenValue[pixel] = calculateValue(stepG, greenValue[pixel], i);
@@ -151,7 +175,7 @@ void fade(int pixel, int color[3], int time)
     pixels.setPixelColor(pixel, pixels.Color(greenValue[pixel], redValue[pixel], blueValue[pixel]));
     pixels.show();
 
-    delay(time/1020);
+    delay(time/ITERATIONS);
   }
 
   prevRedValue[pixel] = redValue[pixel];
@@ -159,6 +183,7 @@ void fade(int pixel, int color[3], int time)
   prevBlueValue[pixel] = blueValue[pixel];
 }
 
+//funkcja zwracająca zapis koloru w formacie GRB
 int *getColor(String color)
 {
   if (color == "R")
