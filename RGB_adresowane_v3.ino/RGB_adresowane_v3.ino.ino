@@ -1,8 +1,7 @@
 /*
  * Usunąłem komendę state
  */
-
-
+#include <Timer.h>
 #include <Adafruit_NeoPixel.h>
 #define PIN 13
 #define NUM_PIXELS 3
