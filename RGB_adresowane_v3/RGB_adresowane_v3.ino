@@ -77,7 +77,6 @@ void pulse()
 {
   for (int i=0; i < 3; i++)
   {
-    Serial.println("Funkcja pulse");
     if (pulsing[i] == false)
     {
       continue;
@@ -87,7 +86,7 @@ void pulse()
       String colorSymbol = diodeColor[i];
       int *color;
       color = getColor(colorSymbol);
-      fade(i, color, 1000);
+      fade(i, color, 500);
       lastPulseState[i] = true;
     }
     else
