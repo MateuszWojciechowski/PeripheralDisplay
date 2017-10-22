@@ -6,6 +6,12 @@
 #define PIN 13
 #define NUM_PIXELS 3
 
+Timer t;
+bool pulsing[3] = {false, false, false};  //czy dioda jest w stanie pulsowania
+int event[3]; //identyfikator zdarzenia potrzebny do biblioteki Timer w momencie zatrzymania pulsowania
+bool lastPulseState[3] = {false, false, false}; //czy ostatnio dioda była włączono czy wyłączona
+String diodeColor[3] = {"black","black","black"}; //kolor na jaki ma świecić dioda podczas pulsowania
+
 int redValue[3] = {0, 0, 0};
 int greenValue[3] = {0, 0, 0};
 int blueValue[3] = {0, 0, 0};
@@ -41,10 +47,49 @@ void loop() {
   {
     int pixel = Serial.readStringUntil(':').toInt();
     String color = Serial.readStringUntil(':');    
-    int time = Serial.readStringUntil(';').toInt();
-    int *newColor;
-    newColor = getColor(color);
-    fade(pixel, newColor, time);
+    if (color == "pulse")
+    {
+      if (pulsing[pixel] == false)
+      {
+        event[pixel] = t.every(1000, pulse);
+      }
+      else
+      {
+        t.stop(event[pixel]);
+      }
+      t.update();
+    }
+    else 
+    {
+      diodeColor[pixel] = color;  //przypisuje aktualny kolor danej diody
+      int time = Serial.readStringUntil(';').toInt();
+      int *newColor;
+      newColor = getColor(color); //pobiera kolor w formacie GRB na podstawie otrzymanego symbolu koloru
+      fade(pixel, newColor, time);
+    }
+
+  }
+}
+
+void pulse()
+{
+  for (int i=0; i < 3; i++)
+  {
+    if (pulsing[i] == false)
+    {
+      continue;
+    }
+    if (lastPulseState[i] == false)
+    {
+      String colorSymbol = diodeColor[i];
+      int *color;
+      color = getColor(colorSymbol);
+      fade(i, color, 1000);
+    }
+    else
+    {
+      fade(i, black, 1000);
+    }
   }
 }
 
