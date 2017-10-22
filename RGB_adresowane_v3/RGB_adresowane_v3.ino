@@ -38,10 +38,12 @@ void setup() {
   pixels.begin();
   pixels.setBrightness(128);
   pixels.show();
+  t.every(1000, pulse);
   Serial.begin(9600);
 }
 
 void loop() {
+  t.update();
   // put your main code here, to run repeatedly:
   if (Serial.available())
   {
@@ -51,13 +53,12 @@ void loop() {
     {
       if (pulsing[pixel] == false)
       {
-        event[pixel] = t.every(1000, pulse);
+        pulsing[pixel] = true;
       }
       else
       {
-        t.stop(event[pixel]);
+        pulsing[pixel] = false;
       }
-      t.update();
     }
     else 
     {
@@ -65,6 +66,7 @@ void loop() {
       int time = Serial.readStringUntil(';').toInt();
       int *newColor;
       newColor = getColor(color); //pobiera kolor w formacie GRB na podstawie otrzymanego symbolu koloru
+      diodeColor[pixel] = color;  //zapamiętanie koloru na wypadek pulsowania
       fade(pixel, newColor, time);
     }
 
@@ -75,6 +77,7 @@ void pulse()
 {
   for (int i=0; i < 3; i++)
   {
+    Serial.println("Funkcja pulse");
     if (pulsing[i] == false)
     {
       continue;
@@ -85,10 +88,12 @@ void pulse()
       int *color;
       color = getColor(colorSymbol);
       fade(i, color, 1000);
+      lastPulseState[i] = true;
     }
     else
     {
       fade(i, black, 1000);
+      lastPulseState[i] = false;
     }
   }
 }
