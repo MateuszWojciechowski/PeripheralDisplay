@@ -9,7 +9,7 @@
 
 Timer t;
 bool pulsing[3] = {false, false, false};  //czy dioda jest w stanie pulsowania
-bool lastPulseState[3] = {false, false, false}; //czy ostatnio dioda była włączono czy wyłączona
+bool lastPulseState = true; //czy ostatnio dioda była włączono czy wyłączona
 String diodeColor[3] = {"black","black","black"}; //kolor na jaki ma świecić dioda podczas pulsowania
 
 int redValue[3] = {0, 0, 0};
@@ -43,11 +43,11 @@ void setup() {
 }
 
 void loop() {
-  t.update();
+  t.update(); //uruchamia Timer
   if (Serial.available())
   {
     int pixel = Serial.readStringUntil(':').toInt();
-    String color = Serial.readStringUntil(':');    
+    String color = Serial.readStringUntil(':');  
     if (color == "pulse")
     {
       if (pulsing[pixel] == false)
@@ -68,53 +68,63 @@ void loop() {
       diodeColor[pixel] = color;  //zapamiętanie koloru na wypadek pulsowania
       fade(pixel, newColor, time);
     }
-
   }
 }
 
 //funkcja obsługująca pulsowanie diod
 void pulse()
 {
-  //iteruję po wszystkich diodach
-  for (int i=0; i < NUM_PIXELS; i++)
-  {
-    //jeśli pulsowanie wyłączone to sprawdź czy dioda przypadkiem nie została wyłączona
-    if (pulsing[i] == false)
-    {
-      if (lastPulseState[i] == false)
-      {
-        String colorSymbol = diodeColor[i];
-        int *color;
-        color = getColor(colorSymbol);
-        fade(i, color, 500);
-        lastPulseState[i] = true;
-      }
-      continue;
-    }
+  pulsingFade(500);
+}
 
-    //pobranie koloru diody
-    String colorSymbol = diodeColor[i];
-    int *color;
-    color = getColor(colorSymbol);
+//funkcja obsługująca zsynchronizowane pulsowanie
+void pulsingFade(int time) {
+  //pobranie kolorow diod
+  int G[NUM_PIXELS], R[NUM_PIXELS], B[NUM_PIXELS];
+  for (int i=0; i < NUM_PIXELS; i++) {
+    int *color = getColor(diodeColor[i]);
+    G[i] = color[0];
+    R[i] = color[1];
+    B[i] = color[2];
 
-    //jeśli jest wyłączona
-    if (lastPulseState[i] == false)
-    {
-      fade(i, color, 500);
-      lastPulseState[i] = true;
-    }
-    //jeśli jest włączona
-    else
-    {
-      int darkColor[3];
-      //przyciemnij aktualny kolor
-      for(int i=0; i<3; i++)
-      {
-        darkColor[i] = color[i] / 4;
+    //jeśli dioda jest w stanie pulsowania i ostatnio była jasna to przyciemnij kolory
+    if (pulsing[i]) {
+      if (lastPulseState) {
+        G[i] /= 4;
+        R[i] /= 4;
+        B[i] /= 4;
       }
-      fade(i, darkColor, 1000);
-      lastPulseState[i] = false;
     }
+  }
+  lastPulseState = !lastPulseState;
+
+  //kroki poszczeglnych kolorow w poszczeglnych diodach
+  int stepG[NUM_PIXELS], stepR[NUM_PIXELS], stepB[NUM_PIXELS];
+  for (int i=0; i < NUM_PIXELS; i++) {
+    stepG[i] = calculateStep(prevGreenValue[i], G[i]);
+    stepR[i] = calculateStep(prevRedValue[i], R[i]);
+    stepB[i] = calculateStep(prevBlueValue[i], B[i]);
+  }
+
+  //iteracje
+  for (int j=0; j < ITERATIONS; j++) {
+    //iteracje po diodach
+    for (int i=0; i < NUM_PIXELS; i++) {
+      greenValue[i] = calculateValue(stepG[i], greenValue[i], j);
+      redValue[i] = calculateValue(stepR[i], redValue[i], j);
+      blueValue[i] = calculateValue(stepB[i], blueValue[i], j);
+
+      pixels.setPixelColor(i, pixels.Color(greenValue[i], redValue[i], blueValue[i]));
+    }
+    pixels.show();
+    delay(time/ITERATIONS);
+  }
+
+  //ustawienie zmiennych prev
+  for (int i=0; i < NUM_PIXELS; i++) {
+    prevGreenValue[i] = greenValue[i];
+    prevRedValue[i] = redValue[i];
+    prevBlueValue[i] = blueValue[i];
   }
 }
 
