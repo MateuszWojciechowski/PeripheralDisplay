@@ -8,7 +8,7 @@
 #define ITERATIONS 1020
 
 Timer t;
-int interval = 500; //okres pulsowania
+int timerID;  //przechowuje ID timera
 bool pulsing[3] = {false, false, false};  //czy dioda jest w stanie pulsowania
 bool lastPulseState = true; //czy ostatnio dioda była włączono czy wyłączona
 String diodeColor[3] = {"black","black","black"}; //kolor na jaki ma świecić dioda podczas pulsowania
@@ -39,7 +39,7 @@ void setup() {
   pixels.begin();
   pixels.setBrightness(100);
   pixels.show();
-  t.every(1000, pulse);
+  timerID = t.every(1000, pulse);
   Serial.begin(9600);
 }
 
@@ -56,18 +56,20 @@ void loop() {
     */
     //Serial.println(Serial.readString());
     int pixel = Serial.readStringUntil(':').toInt();
+    Serial.println(pixel);
     String color = Serial.readStringUntil(':');  
+    Serial.println(color);
+    int time = Serial.readStringUntil(';').toInt();
+    Serial.println(time);
     if (color == "pulse")
     {
       pulsing[pixel] = !pulsing[pixel];
-      int time = Serial.readStringUntil(';').toInt();
-      interval = time;
-      t.every(time, pulse);
+      t.stop(timerID);
+      timerID = t.every(time, pulse);
       t.update();
     }
     else 
     {
-      int time = Serial.readStringUntil(';').toInt();
       int *newColor;
       newColor = getColor(color); //pobiera kolor w formacie GRB na podstawie otrzymanego symbolu koloru
       diodeColor[pixel] = color;  //zapamiętanie koloru na wypadek pulsowania
@@ -79,7 +81,7 @@ void loop() {
 //funkcja obsługująca pulsowanie diod
 void pulse()
 {
-  pulsingFade(interval);
+  pulsingFade(500);
 }
 
 //funkcja obsługująca zsynchronizowane pulsowanie

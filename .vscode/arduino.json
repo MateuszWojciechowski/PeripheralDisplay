@@ -1,5 +1,5 @@
 {
     "board": "arduino:avr:uno",
-    "port": "/dev/cu.usbmodem1411",
+    "port": "/dev/cu.usbmodem1421",
     "sketch": "RGB_adresowane_v3/RGB_adresowane_v3.ino"
 }
