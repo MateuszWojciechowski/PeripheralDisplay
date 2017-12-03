@@ -8,6 +8,7 @@
 #define ITERATIONS 1020
 
 Timer t;
+int timerID;  //przechowuje ID timera
 bool pulsing[3] = {false, false, false};  //czy dioda jest w stanie pulsowania
 bool lastPulseState = true; //czy ostatnio dioda była włączono czy wyłączona
 String diodeColor[3] = {"black","black","black"}; //kolor na jaki ma świecić dioda podczas pulsowania
@@ -38,7 +39,7 @@ void setup() {
   pixels.begin();
   pixels.setBrightness(100);
   pixels.show();
-  t.every(1000, pulse);
+  timerID = t.every(1000, pulse);
   Serial.begin(9600);
 }
 
@@ -46,23 +47,29 @@ void loop() {
   t.update(); //uruchamia Timer
   if (Serial.available())
   {
+    /*
+      Format komend
+      1. Zmiana koloru
+        nr_diody:kolor:czas;
+      2. Pulsowanie
+        nr_diody:pulse:okres;
+    */
+    //Serial.println(Serial.readString());
     int pixel = Serial.readStringUntil(':').toInt();
+    Serial.println(pixel);
     String color = Serial.readStringUntil(':');  
+    Serial.println(color);
+    int time = Serial.readStringUntil(';').toInt();
+    Serial.println(time);
     if (color == "pulse")
     {
-      if (pulsing[pixel] == false)
-      {
-        pulsing[pixel] = true;
-      }
-      else
-      {
-        pulsing[pixel] = false;
-      }
+      pulsing[pixel] = !pulsing[pixel];
+      t.stop(timerID);
+      timerID = t.every(time, pulse);
+      t.update();
     }
     else 
     {
-      diodeColor[pixel] = color;  //przypisuje aktualny kolor danej diody
-      int time = Serial.readStringUntil(';').toInt();
       int *newColor;
       newColor = getColor(color); //pobiera kolor w formacie GRB na podstawie otrzymanego symbolu koloru
       diodeColor[pixel] = color;  //zapamiętanie koloru na wypadek pulsowania
@@ -233,4 +240,3 @@ int *getColor(String color)
     return black;
   }
 }
-
