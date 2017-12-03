@@ -1,6 +1,3 @@
-/*
- * Usunąłem komendę state
- */
 #include <Timer.h>
 #include <Adafruit_NeoPixel.h>
 #define PIN 13
@@ -12,6 +9,7 @@ int timerID;  //przechowuje ID timera
 bool pulsing[3] = {false, false, false};  //czy dioda jest w stanie pulsowania
 bool lastPulseState = true; //czy ostatnio dioda była włączono czy wyłączona
 String diodeColor[3] = {"black","black","black"}; //kolor na jaki ma świecić dioda podczas pulsowania
+bool keepalive = false; //jeśli true to otrzymano wiadomość keepalive
 
 int redValue[3] = {0, 0, 0};
 int greenValue[3] = {0, 0, 0};
@@ -40,6 +38,7 @@ void setup() {
   pixels.setBrightness(100);
   pixels.show();
   timerID = t.every(1000, pulse);
+  t.every(300000, alive);
   Serial.begin(9600);
 }
 
@@ -53,17 +52,19 @@ void loop() {
         nr_diody:kolor:czas;
       2. Pulsowanie
         nr_diody:pulse:okres;
+      3. Keepalive
     */
-    //Serial.println(Serial.readString());
+    if(Serial.find("keepalive"))
+    {
+      keepalive = true;
+    }
     int pixel = Serial.readStringUntil(':').toInt();
-    Serial.println(pixel);
     String color = Serial.readStringUntil(':');  
-    Serial.println(color);
     int time = Serial.readStringUntil(';').toInt();
-    Serial.println(time);
     if (color == "pulse")
     {
       pulsing[pixel] = !pulsing[pixel];
+      //zatrzymany jest poprzedni timer i uruchomiony kolejny z nowym okresem pulsowania
       t.stop(timerID);
       timerID = t.every(time, pulse);
       t.update();
@@ -78,6 +79,17 @@ void loop() {
   }
 }
 
+//funkcja sprawdzająca czy telefon jest w zasięgu
+void alive()
+{
+  if(!keepalive)
+  {
+    //wykonuje się jak telefon zniknął z zasięgu
+    pixels.clear();
+    pixels.update();
+  }
+  keepalive = false;
+}
 //funkcja obsługująca pulsowanie diod
 void pulse()
 {
