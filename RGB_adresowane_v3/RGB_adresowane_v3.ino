@@ -54,9 +54,11 @@ void loop() {
         nr_diody:pulse:okres;
       3. Keepalive
     */
-    if(Serial.find("keepalive"))
+    if(Serial.find("keepalive;"))
     {
       keepalive = true;
+      Serial.readStringUntil(';');
+      Serial.println("KEEPALIVE");
     }
     int pixel = Serial.readStringUntil(':').toInt();
     String color = Serial.readStringUntil(':');  
@@ -86,7 +88,7 @@ void alive()
   {
     //wykonuje się jak telefon zniknął z zasięgu
     pixels.clear();
-    pixels.update();
+    pixels.show();
   }
   keepalive = false;
 }
