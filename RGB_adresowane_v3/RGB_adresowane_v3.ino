@@ -56,11 +56,8 @@ void loop() {
     */
     //Serial.println(Serial.readString());
     int pixel = Serial.readStringUntil(':').toInt();
-    Serial.println(pixel);
     String color = Serial.readStringUntil(':');  
-    Serial.println(color);
     int time = Serial.readStringUntil(';').toInt();
-    Serial.println(time);
     if (color == "pulse")
     {
       pulsing[pixel] = !pulsing[pixel];
