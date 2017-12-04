@@ -6,7 +6,7 @@
 #define PIN 13
 #define NUM_PIXELS 3
 #define ITERATIONS 1020
-//
+
 Timer t;
 int timerID;  //przechowuje ID timera
 bool pulsing[3] = {false, false, false};  //czy dioda jest w stanie pulsowania
@@ -56,11 +56,8 @@ void loop() {
     */
     //Serial.println(Serial.readString());
     int pixel = Serial.readStringUntil(':').toInt();
-    Serial.println(pixel);
     String color = Serial.readStringUntil(':');  
-    Serial.println(color);
     int time = Serial.readStringUntil(';').toInt();
-    Serial.println(time);
     if (color == "pulse")
     {
       pulsing[pixel] = !pulsing[pixel];
