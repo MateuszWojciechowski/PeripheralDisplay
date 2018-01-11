@@ -4,22 +4,22 @@
 #include <Timer.h>
 #include <Adafruit_NeoPixel.h>
 #define PIN 13
-#define NUM_PIXELS 3
+#define NUM_PIXELS 5
 #define ITERATIONS 1020
 
 Timer t;
 int timerID;  //przechowuje ID timera
-bool pulsing[3] = {false, false, false};  //czy dioda jest w stanie pulsowania
+bool pulsing[NUM_PIXELS] = {false, false, false, false, false};  //czy dioda jest w stanie pulsowania
 bool lastPulseState = true; //czy ostatnio dioda była włączono czy wyłączona
-String diodeColor[3] = {"black","black","black"}; //kolor na jaki ma świecić dioda podczas pulsowania
+String diodeColor[NUM_PIXELS] = {"black","black","black", "black", "black"}; //kolor na jaki ma świecić dioda podczas pulsowania
 
-int redValue[3] = {0, 0, 0};
-int greenValue[3] = {0, 0, 0};
-int blueValue[3] = {0, 0, 0};
+int redValue[NUM_PIXELS] = {0, 0, 0, 0, 0};
+int greenValue[NUM_PIXELS] = {0, 0, 0, 0, 0};
+int blueValue[NUM_PIXELS] = {0, 0, 0, 0, 0};
 
-int prevRedValue[3] = {0, 0, 0};
-int prevGreenValue[3] = {0, 0, 0};
-int prevBlueValue[3] = {0, 0, 0};
+int prevRedValue[NUM_PIXELS] = {0, 0, 0, 0, 0};
+int prevGreenValue[NUM_PIXELS] = {0, 0, 0, 0, 0};
+int prevBlueValue[NUM_PIXELS] = {0, 0, 0, 0, 0};
 
 //Colors in GRB format
 int black[3] = { 0, 0, 0 };
